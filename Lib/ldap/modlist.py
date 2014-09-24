@@ -37,13 +37,20 @@ def addModlist(entry,ignore_attr_types=None):
   """Build modify list for call of method LDAPObject.add()"""
   ignore_attr_types = list_dict(map(lower,(ignore_attr_types or [])))
   modlist = []
-  for attrtype in entry.keys():
+  for attrtype in list(entry.keys()):
     if lower(attrtype) in ignore_attr_types:
       # This attribute type is ignored
       continue
     # Eliminate empty attr value strings in list
-    attrvaluelist = filter(lambda x:x!=None,entry[attrtype])
+    attrvaluelist = [x for x in entry[attrtype] if x!=None]
     if attrvaluelist:
+      if type(entry[attrtype]) == type([]):
+        temp_entry = []
+        for item in entry[attrtype]:
+          temp_entry.append(''.join(item).encode('utf8'))
+        entry[attrtype] = temp_entry
+      else:
+        entry[attrtype] = ''.join(entry[attrtype]).encode('utf8')
       modlist.append((attrtype,entry[attrtype]))
   return modlist # addModlist()
 
@@ -70,22 +77,22 @@ def modifyModlist(
       List of attribute type names for which comparison will be made
       case-insensitive
   """
-  ignore_attr_types = list_dict(map(lower,(ignore_attr_types or [])))
-  case_ignore_attr_types = list_dict(map(lower,(case_ignore_attr_types or [])))
+  ignore_attr_types = list_dict(list(map(lower,(ignore_attr_types or []))))
+  case_ignore_attr_types = list_dict(list(map(lower,(case_ignore_attr_types or []))))
   modlist = []
   attrtype_lower_map = {}
-  for a in old_entry.keys():
+  for a in list(old_entry.keys()):
     attrtype_lower_map[lower(a)]=a
-  for attrtype in new_entry.keys():
+  for attrtype in list(new_entry.keys()):
     attrtype_lower = lower(attrtype)
     if attrtype_lower in ignore_attr_types:
       # This attribute type is ignored
       continue
     # Filter away null-strings
-    new_value = filter(lambda x:x!=None,new_entry[attrtype])
+    new_value = [x for x in new_entry[attrtype] if x!=None]
     if attrtype_lower in attrtype_lower_map:
       old_value = old_entry.get(attrtype_lower_map[attrtype_lower],[])
-      old_value = filter(lambda x:x!=None,old_value)
+      old_value = [x for x in old_value if x!=None]
       del attrtype_lower_map[attrtype_lower]
     else:
       old_value = []
@@ -119,7 +126,7 @@ def modifyModlist(
   if not ignore_oldexistent:
     # Remove all attributes of old_entry which are not present
     # in new_entry at all
-    for a in attrtype_lower_map.keys():
+    for a in list(attrtype_lower_map.keys()):
       if a in ignore_attr_types:
         # This attribute type is ignored
         continue
