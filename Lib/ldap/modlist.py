@@ -90,6 +90,8 @@ def modifyModlist(
       continue
     # Filter away null-strings
     new_value = [x for x in new_entry[attrtype] if x!=None]
+    if type(new_value) == type([]) and len(new_value) > 0 and type(new_value[0]) == type(''):
+        new_value = ''.join(new_value).encode('utf8')
     if attrtype_lower in attrtype_lower_map:
       old_value = old_entry.get(attrtype_lower_map[attrtype_lower],[])
       old_value = [x for x in old_value if x!=None]
